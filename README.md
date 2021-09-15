@@ -161,6 +161,9 @@ wait 	 Block until a container stops, then print its exit code
 ### 9. Commit
 	类似git
 	docker commit -a="authorname" -m="message" containerID 目标镜像名:[TAG]	
+
+-----------------------
+
 ##  Docker 原理
 ### 1. 镜像加载原理
 Docker镜像由一层一层的文件系统组成，UnionFS.Bootfs(boot file system)主要包含bootloader和kernel,bootloader主要是引导加载kernel，Linux刚启动时会加载bootfs文件系统Docker镜像的最底层是bootfs. boot加载完成后整个内核就在内存中了，此时内存使用权由bootfs转交给内核，系统也会卸载bootfs. rootfs在bootfs之上，包含的就是典型的Linux系统中的/dev,/proc,/bin,/etc等标准目录和文件，rootfs就是各种不同的操作系统发行版，如centos，Ubuntu
@@ -169,6 +172,8 @@ Docker container很小是因为是一个精简的OS，rootfs可以很小，只�
 ### 2. 分层文件系统
 	例如：操作系统/python/app
 	Docker镜像都是只读的，容器启动时，一个新的可写层加到镜像的顶部，就是所谓的容器层，用户所有的操作也都是基于容器层，容器之下都是镜像层
+
+----------------------
 
 ## 容器数据卷
 	 - Docker的数据都在容器中，如果容器删除，数据就会丢失，所以需要持久化的措施
@@ -202,6 +207,9 @@ Docker container很小是因为是一个精简的OS，rootfs可以很小，只�
 	双向复制，任一容器删除，数据仍存在
 	数据卷容器的生命周期一直持续到没有容器使用
 	一旦持久化到本地，本地数据不会删除
+
+----------------
+
 ## DockerFile
 	DockerFile是用来构建Docker镜像的文件，命令参数脚本
 	构建的步骤：
@@ -227,3 +235,31 @@ Docker container很小是因为是一个精简的OS，rootfs可以很小，只�
 	ONBUILD 	# 当构建一个被继承DockerFile时就会运行ONBUILD指令
 	COPY 		# 类似ADD，将文件拷贝到镜像
 	ENV 		# 构建时设置环境变量
+
+--------------
+
+## Docker 网络
+	核心：Linux虚拟化网络技术
+	Docker中所有的网络接口都是虚拟的，虚拟的转发效率高（内网传输文件）
+	相关知识： 网络模式
+	 - bridge     桥接（docker默认）
+	 - none       不配置网络
+	 - host       与宿主机共享网络
+	 - container  容器网络联通（局限性大，用得少） 	
+### 1. Docker0
+	container共用一个路由器，即Docker0
+	容器不指定网络的情况下，Docker会自动分配一个默认的可用ip
+### 2. --link 指令  (不建议使用)
+	docker run container1 --link container2
+	// 单向连接
+### 3. 自定义网络
+	docker network ls # List network
+	docker network create --driver bridge --subnet 192.168.0.0/16 --gateway 192.168.0.1 mynet
+	------------------------默认bridge------子网--------------------网关--------------- 网络名
+	docker run -d -P --name testcase-01 --net mynet tomcat
+	docker run -d -P --name testcase-02 --net mynet tomcat
+	可以直接通过容器名称连接容器
+	不同的集群使用不同的网络可以保证集群是安全和健康的
+	docker network connect   //connect one container to a network
+--------------
+
